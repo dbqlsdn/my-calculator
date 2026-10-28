@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>나의 AI 계산기 - 기록 저장</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Malgun Gothic", sans-serif;
+      background: #0b1120;
+      color: #f9fafb;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 440px;
+      padding: 30px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 20px;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      margin: 0 0 10px;
+    }
+
+    .description {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      margin: 18px 0 9px;
+      font-weight: bold;
+      color: #d1d5db;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px;
+      background: #111827;
+      color: white;
+      border: 1px solid #4b5563;
+      border-radius: 10px;
+      font-size: 18px;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid #818cf8;
+    }
+
+    .calculate-button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 26px;
+      border: none;
+      border-radius: 10px;
+      background: #4f46e5;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .calculate-button:hover {
+      background: #6366f1;
+    }
+
+    .result {
+      margin-top: 25px;
+      padding: 25px 15px;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .result-title {
+      color: #9ca3af;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    #output {
+      color: #a5b4fc;
+      font-size: 36px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+
+    #output.error {
+      color: #fca5a5;
+      font-size: 19px;
+    }
+
+    .copy-button {
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      padding: 12px;
+      border: 1px solid #6366f1;
+      border-radius: 10px;
+      background: #374151;
+      color: #e0e7ff;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .copy-button:hover:not(:disabled) {
+      background: #4b5563;
+    }
+
+    .copy-button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .copy-message {
+      min-height: 20px;
+      margin-top: 8px;
+      color: #a7f3d0;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+
+    .history-header h2 {
+      font-size: 19px;
+      margin: 0;
+    }
+
+    .delete-button {
+      background: #374151;
+      color: #fca5a5;
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+
+    .delete-button:hover {
+      background: #4b5563;
+    }
+
+    .delete-button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .history-list {
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 14px;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      color: #d1d5db;
+      text-align: left;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .history-item:hover {
+      border-color: #818cf8;
+    }
+
+    .history-item strong {
+      color: #a5b4fc;
+      overflow-wrap: anywhere;
+    }
+
+    .empty-history {
+      color: #9ca3af;
+      text-align: center;
+      font-size: 14px;
+      padding: 20px;
+    }
+
+    .hint {
+      color: #9ca3af;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 480px) {
+      .calculator {
+        padding: 22px;
+      }
+
+      #output {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="calculator">
+    <h1>나의 첫 번째 AI 계산기</h1>
+
+    <p class="description">
+      계산 기록을 기억하는 계산기
+    </p>
+
+    <form id="calculatorForm" novalidate>
+      <label for="number1">첫 번째 숫자</label>
+      <input type="number" id="number1"
+             placeholder="숫자를 입력하세요"
+             step="any">
+
+      <label for="operator">계산 방법</label>
+      <select id="operator">
+        <option value="+">더하기 (+)</option>
+        <option value="-">빼기 (-)</option>
+        <option value="*">곱하기 (×)</option>
+        <option value="/">나누기 (÷)</option>
+      </select>
+
+      <label for="number2">두 번째 숫자</label>
+      <input type="number" id="number2"
+             placeholder="숫자를 입력하세요"
+             step="any">
+
+      <button type="submit"
+              class="calculate-button">
+        계산하기
+      </button>
+    </form>
+
+    <div class="result"
+         role="status" aria-live="polite">
+      <div class="result-title">계산 결과</div>
+      <div id="output">
+        결과가 여기에 표시됩니다.
+      </div>
+    </div>
+
+    <button type="button" id="copyResult" class="copy-button" disabled>
+      결과 복사
+    </button>
+    <div id="copyMessage" class="copy-message" role="status" aria-live="polite"></div>
+
+    <section aria-label="계산 기록">
+      <div class="history-header">
+        <h2>계산 기록</h2>
+        <button type="button"
+                class="delete-button"
+                id="deleteHistory">
+          전체 삭제
+        </button>
+      </div>
+
+      <div id="historyList"
+           class="history-list">
+      </div>
+    </section>
+
+    <p class="hint">
+      Enter 키로 계산할 수 있습니다.
+      기록을 클릭하면 이전 계산을 불러옵니다.
+    </p>
+  </main>
+
+  <script>
+    // 1. HTML 요소 가져오기
+    const form = document.getElementById("calculatorForm");
+    const input1 = document.getElementById("number1");
+    const input2 = document.getElementById("number2");
+    const operator = document.getElementById("operator");
+    const output = document.getElementById("output");
+    const historyList = document.getElementById("historyList");
+    const deleteButton = document.getElementById("deleteHistory");
+    const copyButton = document.getElementById("copyResult");
+    const copyMessage = document.getElementById("copyMessage");
+    let currentResult = null;
+
+    function setCurrentResult(value) {
+      currentResult = value;
+      copyButton.disabled = value === null;
+      copyMessage.textContent = "";
+    }
+
+    // 2. 저장 공간의 이름
+    const STORAGE_KEY = "myCalculatorHistory";
+
+    // 3. 기존 기록 불러오기
+    let history = [];
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : [];
+
+      if (Array.isArray(parsed)) {
+        history = parsed;
+      }
+    } catch (error) {
+      console.warn("기록을 불러올 수 없습니다.", error);
+    }
+
+    // 4. 기록 저장하기
+    function saveHistory() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(history)
+        );
+      } catch (error) {
+        console.warn("기록 저장에 실패했습니다.", error);
+        alert("브라우저에 계산 기록을 저장할 수 없습니다.");
+      }
+    }
+
+    // 5. 계산하기
+    function calculate() {
+      const number1 = input1.valueAsNumber;
+      const number2 = input2.valueAsNumber;
+      const selectedOperator = operator.value;
+
+      output.classList.remove("error");
+
+      if (
+        input1.value.trim() === "" ||
+        input2.value.trim() === "" ||
+        !Number.isFinite(number1) ||
+        !Number.isFinite(number2) ||
+        !input1.validity.valid ||
+        !input2.validity.valid
+      ) {
+        showError("올바른 숫자를 입력해 주세요.");
+        return;
+      }
+
+      if (selectedOperator === "/" && number2 === 0) {
+        showError("0으로 나눌 수 없습니다.");
+        return;
+      }
+
+      let result;
+
+      switch (selectedOperator) {
+        case "+":
+          result = number1 + number2;
+          break;
+        case "-":
+          result = number1 - number2;
+          break;
+        case "*":
+          result = number1 * number2;
+          break;
+        case "/":
+          result = number1 / number2;
+          break;
+      }
+
+      if (!Number.isFinite(result)) {
+        showError("계산할 수 없는 숫자입니다.");
+        return;
+      }
+
+      const formattedResult =
+        Number(result.toPrecision(12))
+          .toLocaleString("ko-KR");
+
+      output.textContent = formattedResult;
+      setCurrentResult(String(Number(result.toPrecision(12))));
+
+      // 새 기록을 맨 앞에 추가
+      history.unshift({
+        number1: number1,
+        number2: number2,
+        operator: selectedOperator,
+        result: formattedResult
+      });
+
+      // 최근 20개 기록만 유지
+      history = history.slice(0, 20);
+
+      saveHistory();
+      renderHistory();
+    }
+
+    // 6. 오류 메시지 표시
+    function showError(message) {
+      output.textContent = message;
+      output.classList.add("error");
+      setCurrentResult(null);
+    }
+
+    // 7. 계산 기록 화면에 표시
+    function renderHistory() {
+      historyList.replaceChildren();
+      deleteButton.disabled = history.length === 0;
+
+      if (history.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty-history";
+        empty.textContent = "저장된 계산 기록이 없습니다.";
+        historyList.appendChild(empty);
+        return;
+      }
+
+      const symbols = {
+        "+": "+",
+        "-": "−",
+        "*": "×",
+        "/": "÷"
+      };
+
+      history.forEach(function(item) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "history-item";
+
+        const expression = document.createElement("span");
+        expression.textContent =
+          item.number1 + " " +
+          (symbols[item.operator] || item.operator) + " " +
+          item.number2;
+
+        const answer = document.createElement("strong");
+        answer.textContent = "= " + item.result;
+
+        button.appendChild(expression);
+        button.appendChild(answer);
+
+        // 기록을 누르면 이전 계산 불러오기
+        button.addEventListener("click", function() {
+          input1.value = item.number1;
+          input2.value = item.number2;
+          operator.value = item.operator;
+          output.classList.remove("error");
+          output.textContent = item.result;
+          const restored = Number(String(item.result).replace(/,/g, ""));
+          setCurrentResult(Number.isFinite(restored) ? String(restored) : null);
+        });
+
+        historyList.appendChild(button);
+      });
+    }
+
+    // 8. 기록 전체 삭제
+    deleteButton.addEventListener("click", function() {
+      if (history.length === 0) return;
+
+      const confirmed = confirm(
+        "계산 기록을 모두 삭제하시겠습니까?"
+      );
+
+      if (!confirmed) return;
+
+      history = [];
+      saveHistory();
+      renderHistory();
+    });
+
+    // 9. 계산 버튼 또는 폼 제출
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+      calculate();
+    });
+
+    // 10. Enter 키로 계산
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" &&
+          !event.isComposing &&
+          !event.repeat) {
+        event.preventDefault();
+        calculate();
+      }
+    });
+
+    // 11. 결과를 클립보드에 복사
+    copyButton.addEventListener("click", async function() {
+      if (currentResult === null || output.classList.contains("error")) return;
+
+      const textToCopy = currentResult;
+      copyMessage.textContent = "";
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          // 로컬 파일 등에서 Clipboard API를 사용할 수 없는 경우
+          const temporary = document.createElement("textarea");
+          temporary.value = textToCopy;
+          temporary.setAttribute("readonly", "");
+          temporary.style.position = "fixed";
+          temporary.style.left = "-9999px";
+          document.body.appendChild(temporary);
+          temporary.select();
+          try {
+            if (!document.execCommand("copy")) {
+              throw new Error("복사 명령 실패");
+            }
+          } finally {
+            temporary.remove();
+          }
+        }
+        copyMessage.textContent = "복사되었습니다";
+      } catch (error) {
+        console.warn("결과 복사 실패:", error);
+        copyMessage.textContent = "복사하지 못했습니다. 브라우저 권한을 확인해 주세요.";
+      }
+    });
+
+    // 12. 페이지를 열면 저장된 기록 표시
+    renderHistory();
+  </script>
+
+</body>
+</html>
