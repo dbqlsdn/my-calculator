@@ -412,8 +412,8 @@
         result: formattedResult
       });
 
-      // 최근 20개 기록만 유지
-      history = history.slice(0, 20);
+      // 최근 5개 기록만 유지
+      history = history.slice(0, 5);
 
       saveHistory();
       renderHistory();
