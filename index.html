@@ -282,7 +282,7 @@
 
     <section aria-label="계산 기록">
       <div class="history-header">
-        <h2>계산 기록</h2>
+        <h2>계산 기록 <span id="historyCount"></span></h2>
         <button type="button"
                 class="delete-button"
                 id="deleteHistory">
@@ -428,6 +428,9 @@
 
     // 7. 계산 기록 화면에 표시
     function renderHistory() {
+      const historyCount = document.getElementById("historyCount");
+      historyCount.textContent = history.length + "/5";
+
       historyList.replaceChildren();
       deleteButton.disabled = history.length === 0;
 
