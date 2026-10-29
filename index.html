@@ -228,6 +228,26 @@
         font-size: 30px;
       }
     }
+  .history-record {
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #4b5563;
+  border-radius: 12px;
+}
+
+.history-record > button:not(.history-item) {
+  padding: 7px 10px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 6px;
+  background: #374151;
+  color: #f9fafb;
+  cursor: pointer;
+}
+
+.history-record p {
+  overflow-wrap: anywhere;
+}
   </style>
 </head>
 
@@ -450,6 +470,8 @@
       };
 
       history.forEach(function(item) {
+        const record = document.createElement("div");
+        record.className = "history-record";
         const button = document.createElement("button");
         button.type = "button";
         button.className = "history-item";
@@ -477,7 +499,37 @@
           setCurrentResult(Number.isFinite(restored) ? String(restored) : null);
         });
 
-        historyList.appendChild(button);
+        record.appendChild(button);
+        if (item.memo) {
+          const memoText = document.createElement("p");
+          memoText.textContent = "메모: " + item.memo;
+          record.appendChild(memoText);
+        }
+        const memoButton = document.createElement("button");
+        memoButton.type = "button";
+        memoButton.textContent = item.memo ? "메모 수정" : "메모 추가";
+        memoButton.addEventListener("click", function() {
+          const memo = prompt("계산 기록에 남길 메모를 입력해 주세요.", item.memo || "");
+          if (memo === null) return;
+          item.memo = memo.trim();
+          saveHistory();
+          renderHistory();
+        });
+        record.appendChild(memoButton);
+        if (item.memo) {
+          const deleteMemoButton = document.createElement("button");
+          deleteMemoButton.type = "button";
+          deleteMemoButton.textContent = "메모 삭제";
+
+          deleteMemoButton.addEventListener("click", function() {
+            delete item.memo;
+            saveHistory();
+            renderHistory();
+          });
+
+          record.appendChild(deleteMemoButton);
+        }
+        historyList.appendChild(record);
       });
     }
 
